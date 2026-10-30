@@ -2,6 +2,8 @@ package dao
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/domain/repository"
@@ -33,5 +35,26 @@ func (r *status) Create(ctx context.Context, status *object.Status) (*object.Sta
 	if err != nil {
 		return nil, fmt.Errorf("fetch created status: %w", err)
 	}
+	return entity, nil
+}
+
+func (r *status) FindByID(ctx context.Context, id object.StatusID) (*object.Status, error) {
+	entity := new(object.Status)
+	err := r.db.QueryRowxContext(ctx, "select * from status where id = ?", id).StructScan(entity)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("find by id: %w", err)
+	}
+	account := new(object.Account)
+	err = r.db.QueryRowxContext(ctx, "select * from account where id = ?", entity.AccountID).StructScan(account)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("no account found: %w", err)
+		}
+		return nil, fmt.Errorf("fetch account by id: %w", err)
+	}
+	entity.Account = account
 	return entity, nil
 }
