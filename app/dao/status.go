@@ -58,3 +58,11 @@ func (r *status) FindByID(ctx context.Context, id object.StatusID) (*object.Stat
 	entity.Account = account
 	return entity, nil
 }
+
+func (r *status) Delete(ctx context.Context, id object.StatusID) error {
+	_, err := r.db.ExecContext(ctx, "delete from status where id = ?", id)
+	if err != nil {
+		return fmt.Errorf("delete status: %w", err)
+	}
+	return nil
+}
